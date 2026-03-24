@@ -29,7 +29,7 @@ import type { BatchSpanProcessor } from './models/tracerProviderModel';
 import { initializeDefaultTracerProviderConfiguration } from './models/tracerProviderModel';
 import type { BatchLogRecordProcessor } from './models/loggerProviderModel';
 import { initializeDefaultLoggerProviderConfiguration } from './models/loggerProviderModel';
-import { getGrpcTlsConfig, getHttpTlsConfig } from './utils';
+import { getGrpcTlsConfig, getHttpTlsConfig, warnInvalidConfigValue } from './utils';
 import type { ExperimentalResourceDetector } from './models/resourceModel';
 
 /**
@@ -385,6 +385,14 @@ export function setTracerProvider(config: ConfigurationModel): void {
           batchInfo.exporter.otlp_http.encoding = OtlpHttpEncoding.JSON;
         } else if (protocol === 'http/protobuf') {
           batchInfo.exporter.otlp_http.encoding = OtlpHttpEncoding.Protobuf;
+        } else {
+          warnInvalidConfigValue(
+            'OTEL_EXPORTER_OTLP_TRACES_PROTOCOL',
+            protocol,
+            ['grpc', 'http/json', 'http/protobuf'],
+            'http/protobuf'
+          );
+          batchInfo.exporter.otlp_http.encoding = OtlpHttpEncoding.Protobuf;
         }
       }
 
@@ -515,6 +523,12 @@ export function setMeterProvider(config: ConfigurationModel): void {
                 ExporterTemporalityPreference.LowMemory;
               break;
             default:
+              warnInvalidConfigValue(
+                'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE',
+                temporalityPreference,
+                ['cumulative', 'delta', 'low_memory'],
+                'cumulative'
+              );
               readerPeriodicInfo.exporter.otlp_grpc.temporality_preference =
                 ExporterTemporalityPreference.Cumulative;
               break;
@@ -531,6 +545,12 @@ export function setMeterProvider(config: ConfigurationModel): void {
                 ExporterDefaultHistogramAggregation.Base2ExponentialBucketHistogram;
               break;
             default:
+              warnInvalidConfigValue(
+                'OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION',
+                defaultHistogramAggregation,
+                ['explicit_bucket_histogram', 'base2_exponential_bucket_histogram'],
+                'explicit_bucket_histogram'
+              );
               readerPeriodicInfo.exporter.otlp_grpc.default_histogram_aggregation =
                 ExporterDefaultHistogramAggregation.ExplicitBucketHistogram;
               break;
@@ -580,6 +600,12 @@ export function setMeterProvider(config: ConfigurationModel): void {
                 ExporterTemporalityPreference.LowMemory;
               break;
             default:
+              warnInvalidConfigValue(
+                'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE',
+                temporalityPreference,
+                ['cumulative', 'delta', 'low_memory'],
+                'cumulative'
+              );
               readerPeriodicInfo.exporter.otlp_http.temporality_preference =
                 ExporterTemporalityPreference.Cumulative;
               break;
@@ -596,6 +622,12 @@ export function setMeterProvider(config: ConfigurationModel): void {
                 ExporterDefaultHistogramAggregation.Base2ExponentialBucketHistogram;
               break;
             default:
+              warnInvalidConfigValue(
+                'OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION',
+                defaultHistogramAggregation,
+                ['explicit_bucket_histogram', 'base2_exponential_bucket_histogram'],
+                'explicit_bucket_histogram'
+              );
               readerPeriodicInfo.exporter.otlp_http.default_histogram_aggregation =
                 ExporterDefaultHistogramAggregation.ExplicitBucketHistogram;
               break;
@@ -605,6 +637,15 @@ export function setMeterProvider(config: ConfigurationModel): void {
           readerPeriodicInfo.exporter.otlp_http.encoding =
             OtlpHttpEncoding.JSON;
         } else if (protocol === 'http/protobuf') {
+          readerPeriodicInfo.exporter.otlp_http.encoding =
+            OtlpHttpEncoding.Protobuf;
+        } else {
+          warnInvalidConfigValue(
+            'OTEL_EXPORTER_OTLP_METRICS_PROTOCOL',
+            protocol,
+            ['grpc', 'http/json', 'http/protobuf'],
+            'http/protobuf'
+          );
           readerPeriodicInfo.exporter.otlp_http.encoding =
             OtlpHttpEncoding.Protobuf;
         }
@@ -627,6 +668,12 @@ export function setMeterProvider(config: ConfigurationModel): void {
         config.meter_provider.exemplar_filter = ExemplarFilter.AlwaysOff;
         break;
       default:
+        warnInvalidConfigValue(
+          'OTEL_METRICS_EXEMPLAR_FILTER',
+          exemplarFilter,
+          ['trace_based', 'always_on', 'always_off'],
+          'trace_based'
+        );
         config.meter_provider.exemplar_filter = ExemplarFilter.TraceBased;
         break;
     }
@@ -781,6 +828,14 @@ export function setLoggerProvider(config: ConfigurationModel): void {
         if (protocol === 'http/json') {
           batchInfo.exporter.otlp_http.encoding = OtlpHttpEncoding.JSON;
         } else if (protocol === 'http/protobuf') {
+          batchInfo.exporter.otlp_http.encoding = OtlpHttpEncoding.Protobuf;
+        } else {
+          warnInvalidConfigValue(
+            'OTEL_EXPORTER_OTLP_LOGS_PROTOCOL',
+            protocol,
+            ['grpc', 'http/json', 'http/protobuf'],
+            'http/protobuf'
+          );
           batchInfo.exporter.otlp_http.encoding = OtlpHttpEncoding.Protobuf;
         }
       }

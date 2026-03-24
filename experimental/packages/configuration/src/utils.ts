@@ -165,6 +165,28 @@ export function envVariableSubstitution(value: unknown): string | undefined {
   return String(value);
 }
 
+/**
+ * Emits a diag.warn for an unrecognized configuration value.
+ *
+ * @param {string} configName - The name of the configuration option (e.g. env var name or config file key).
+ * @param {string} actual - The unrecognized value that was provided.
+ * @param {string[]} validValues - The list of valid values.
+ * @param {string} [fallback] - The fallback value being used. If provided, appended to the message.
+ */
+export function warnInvalidConfigValue(
+  configName: string,
+  actual: string,
+  validValues: string[],
+  fallback?: string
+): void {
+  const expected = validValues.map(v => `'${v}'`).join(', ');
+  let msg = `Unknown ${configName} value: '${actual}', expected ${expected}.`;
+  if (fallback != null) {
+    msg += ` Using '${fallback}'.`;
+  }
+  diag.warn(msg);
+}
+
 export function getGrpcTlsConfig(
   certificateFile?: string,
   clientKeyFile?: string,

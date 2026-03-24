@@ -22,6 +22,7 @@ import {
   getNumberListFromConfigFile,
   getStringFromConfigFile,
   getStringListFromConfigFile,
+  warnInvalidConfigValue,
 } from './utils';
 import type { NameStringValuePair } from './models/commonModel';
 import { OtlpHttpEncoding, SeverityNumber } from './models/commonModel';
@@ -389,6 +390,12 @@ function parseComposableSampler(
       }
       break;
     }
+
+    default:
+      diag.warn(
+        `Unknown composable sampler type: '${samplerType}'`
+      );
+      break;
   }
 
   return parsedSampler;
@@ -467,6 +474,12 @@ function parseSampler(sampler: Sampler): Sampler {
       }
       break;
     }
+
+    default:
+      diag.warn(
+        `Unknown sampler type: '${samplerType}'`
+      );
+      break;
   }
 
   return parsedSampler;
@@ -623,6 +636,12 @@ function parseConfigSpanOrLogRecordExporter(
       parsedExporter = {
         console: {},
       };
+      break;
+
+    default:
+      diag.warn(
+        `Unknown exporter type: '${exporterType}'`
+      );
       break;
   }
 
@@ -794,6 +813,17 @@ export function getTemporalityPreference(
     case 'low_memory':
       return ExporterTemporalityPreference.LowMemory;
     default:
+      if (
+        temporalityPreferenceType != null &&
+        temporalityPreferenceType !== ''
+      ) {
+        warnInvalidConfigValue(
+          'temporality_preference',
+          temporalityPreferenceType,
+          ['cumulative', 'delta', 'low_memory'],
+          'cumulative'
+        );
+      }
       return ExporterTemporalityPreference.Cumulative;
   }
 }
@@ -810,6 +840,17 @@ function getDefaultHistogramAggregation(
     case 'base2_exponential_bucket_histogram':
       return ExporterDefaultHistogramAggregation.Base2ExponentialBucketHistogram;
     default:
+      if (
+        defaultHistogramAggregationType != null &&
+        defaultHistogramAggregationType !== ''
+      ) {
+        warnInvalidConfigValue(
+          'default_histogram_aggregation',
+          defaultHistogramAggregationType,
+          ['explicit_bucket_histogram', 'base2_exponential_bucket_histogram'],
+          'explicit_bucket_histogram'
+        );
+      }
       return ExporterDefaultHistogramAggregation.ExplicitBucketHistogram;
   }
 }
@@ -957,6 +998,12 @@ function parseMetricExporter(exporter: PushMetricExporter): PushMetricExporter {
         };
       }
       break;
+
+    default:
+      diag.warn(
+        `Unknown metric exporter type: '${exporterType}'`
+      );
+      break;
   }
 
   return parsedExporter;
@@ -983,6 +1030,12 @@ export function setMeterProvider(
           config.meter_provider.exemplar_filter = ExemplarFilter.AlwaysOff;
           break;
         default:
+          warnInvalidConfigValue(
+            'exemplar_filter',
+            exemplarFilter,
+            ['trace_based', 'always_on', 'always_off'],
+            'trace_based'
+          );
           config.meter_provider.exemplar_filter = ExemplarFilter.TraceBased;
           break;
       }
@@ -1065,6 +1118,15 @@ export function setMeterProvider(
               case 'no_translation':
                 exporter['prometheus/development']!.translation_strategy =
                   ExperimentalPrometheusTranslationStrategy.NoTranslation;
+                break;
+              default:
+                if (ts != null) {
+                  warnInvalidConfigValue(
+                    'translation_strategy',
+                    ts,
+                    ['underscore_escaping_with_suffixes', 'underscore_escaping_without_suffixes', 'no_utf8_escaping_with_suffixes', 'no_translation']
+                  );
+                }
                 break;
             }
           }
@@ -1172,6 +1234,13 @@ export function setMeterProvider(
                 break;
               case 'up_down_counter':
                 selector.instrument_type = InstrumentType.UpDownCounter;
+                break;
+              default:
+                warnInvalidConfigValue(
+                  'instrument_type',
+                  instrumentType,
+                  ['counter', 'gauge', 'histogram', 'observable_counter', 'observable_gauge', 'observable_up_down_counter', 'up_down_counter']
+                );
                 break;
             }
           }
@@ -1342,6 +1411,20 @@ export function getSeverity(
     case 'trace4':
       return SeverityNumber.TRACE4;
     default:
+      if (severityType != null && severityType !== '') {
+        warnInvalidConfigValue(
+          'severity',
+          severityType,
+          [
+            'trace', 'trace2', 'trace3', 'trace4',
+            'debug', 'debug2', 'debug3', 'debug4',
+            'info', 'info2', 'info3', 'info4',
+            'warn', 'warn2', 'warn3', 'warn4',
+            'error', 'error2', 'error3', 'error4',
+            'fatal', 'fatal2', 'fatal3', 'fatal4',
+          ]
+        );
+      }
       return undefined;
   }
 }
